@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ua.sanya5791.pochemu"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+		android:targetSdkVersion="22"
+		android:minSdkVersion="16" />
+
+    
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_pochemu"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Base.AppCompat.Light" 
+        android:name="ua.sanya5791.pochemu.control.MyApplication">
+<!--         android:hardwareAccelerated="false" -->
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+<!--            android:screenOrientation="portrait"> 
+-->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings" >
+        </activity>
+        
+        <!-- ACRA bug report -->
+        <activity 
+          android:name="org.acra.CrashReportDialog"
+	        android:theme="@style/Theme.Dialog"
+	        android:launchMode="singleInstance"
+	        android:excludeFromRecents="true"
+	        android:finishOnTaskLaunch="true" >
+	      </activity>
+        
+        
+    </application>
+
+</manifest>

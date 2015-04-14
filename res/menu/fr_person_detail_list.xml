@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+      <item android:id="@+id/ab_add" 
+          android:title="@string/ab_add" 
+          android:showAsAction="always" 
+          android:icon="@drawable/ic_action_new_event1">
+          
+      </item>
+
+</menu>
+<!-- ic_action_new_event -->    

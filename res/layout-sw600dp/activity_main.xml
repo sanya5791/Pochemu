@@ -1,0 +1,52 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <ToggleButton
+        android:id="@+id/toggleConnect"
+        android:layout_width="match_parent"
+        android:layout_height="50sp"
+        android:gravity="center_horizontal"
+        android:onClick="onMyClick"
+        android:text="@string/bt_test_title_connect"
+        android:textOff="@string/bt_test_title_disconnect"
+        android:textOn="@string/bt_test_title_connect"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/frgmCont1"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/toggleConnect"
+        android:layout_marginRight="5sp"
+        android:layout_marginLeft="10sp"
+        android:layout_toLeftOf="@+id/surfaceView1" >
+
+    </FrameLayout>
+
+    <SurfaceView
+        android:id="@+id/surfaceView1"
+        android:layout_width="7dp"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/toggleConnect"
+        android:layout_centerHorizontal="true"
+        android:minWidth="7sp"
+        android:visibility="invisible" />
+    
+    <FrameLayout
+        android:id="@+id/frgmCont2"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/toggleConnect"
+        android:layout_marginRight="10sp"
+        android:layout_marginLeft="5sp"
+        android:layout_toRightOf="@+id/surfaceView1"
+        android:visibility="visible" >
+
+    </FrameLayout>
+
+</RelativeLayout>
