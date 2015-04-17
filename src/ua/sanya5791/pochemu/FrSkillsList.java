@@ -137,6 +137,7 @@ public class FrSkillsList extends Fragment
 	private OnLvSelectListener onLvSelectListener;
 
 	private DbQueryTask<FrSkillsList> getSkillsTask;
+	private static final String ASYNCTASK_WAS_NOT_FINISHED = "AsyncTaskNotFinished"; 
 
 	private DataSkillRegistration dsr;
 	private SingletoneUI stUI; 
@@ -306,13 +307,6 @@ public class FrSkillsList extends Fragment
 	
 
 	@Override
-	public void onSaveInstanceState(Bundle outState) {
-		outState.putBoolean(SEARCH_OPENED, mSearchOpened);
-		outState.putString(SEARCH_QUERY, mSearchQuery);
-		super.onSaveInstanceState(outState);
-	}
-
-	@Override
 	public void onActivityCreated(@Nullable Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		myLogger("onActivityCreated: ");
@@ -323,7 +317,8 @@ public class FrSkillsList extends Fragment
 		tv.setText(titleName);
 
 		//on screen rotate don't call DB
-		if(savedInstanceState != null){
+		if(savedInstanceState != null &&
+				! savedInstanceState.getBoolean(ASYNCTASK_WAS_NOT_FINISHED)){
 			// создаем лоадер чтения данных for ListView
 		    getLoaderManager().initLoader(DBTASK_GET_DATA_FOR_LV, 
 		    		null, this);
@@ -703,7 +698,25 @@ public class FrSkillsList extends Fragment
 	}
 
 	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		myLogger("onSaveInstanceState():");
+		super.onSaveInstanceState(outState);
+		
+		outState.putBoolean(SEARCH_OPENED, mSearchOpened);
+		outState.putString(SEARCH_QUERY, mSearchQuery);
+		//if a user rotate screen during asynctask working  
+		if(getSkillsTask != null && 
+				getSkillsTask.getStatus() != AsyncTask.Status.FINISHED){
+	
+			getSkillsTask.cancelTask();
+			outState.putBoolean(ASYNCTASK_WAS_NOT_FINISHED, true);
+		}
+		
+	}
+
+	@Override
 	public void onDestroyView() {
+		myLogger("onDestroyView():");
 		super.onDestroyView();
 		dbSkills.close();
 	}

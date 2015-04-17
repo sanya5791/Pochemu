@@ -42,8 +42,8 @@ public abstract class DbQueryTask<T> extends AsyncTask<String, String, Boolean> 
 	@Override
 	protected void onCancelled() {
 		myLogger("onCancelled(Boolean result):");
-		super.onCancelled();
 		progressDialog.dismiss();
+		super.onCancelled();
 	}
 
 	@Override
@@ -77,10 +77,12 @@ public abstract class DbQueryTask<T> extends AsyncTask<String, String, Boolean> 
 		if(isCancelled()){
 			return false;
 		}
-		if (launchCallableStatement())
+		if (launchCallableStatement() && !isCancelled()){
 			return true;
-		else
+		}else{
+			progressDialog.dismiss();
 			return false;
+		}
 	}
 	
 	@Override
@@ -97,6 +99,11 @@ public abstract class DbQueryTask<T> extends AsyncTask<String, String, Boolean> 
 			myLogger("asyncTaskListener.onTaskFinished(this, false)");
 			asyncTaskListener.onTaskFinished(this, false);
 		}
+	}
+	
+	public void cancelTask(){
+		progressDialog.dismiss();
+		cancel(true);
 	}
 	
 	private void myLogger(String statement){

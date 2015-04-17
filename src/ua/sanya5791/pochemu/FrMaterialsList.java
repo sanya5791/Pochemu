@@ -20,6 +20,7 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Loader;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -72,9 +73,7 @@ public class FrMaterialsList extends Fragment
 			 */
 			public MyCursorLoader(Context context, T db, int dbtask_id, 
 												long _id) {
-				super(context);
-				this.db = db;
-				this.dbtask_id = dbtask_id;
+				this(context, db, dbtask_id);
 				this._id = _id;
 			}
 			
@@ -114,6 +113,7 @@ public class FrMaterialsList extends Fragment
 	private OnLvSelectListener onLvSelectListener;
 
 	private DbQueryTask<FrMaterialsList> getMaterialsTask;
+	private static final String ASYNCTASK_WAS_NOT_FINISHED = "AsyncTaskNotFinished"; 
 
 	private SimpleCursorAdapter scAdapter;
 	private ResultSet rs;
@@ -244,7 +244,8 @@ public class FrMaterialsList extends Fragment
 				+ subZoneName);
 
 		//on screen rotate don't call FB DB, but use SQLite DB instead
-		if(savedInstanceState != null){
+		if(savedInstanceState != null &&
+				! savedInstanceState.getBoolean(ASYNCTASK_WAS_NOT_FINISHED)){
 			// создаем лоадер чтения данных for ListView
 		    getLoaderManager().initLoader(DBTASK_GET_DATA_FOR_LV, 
 		    		null, this);
@@ -321,6 +322,20 @@ public class FrMaterialsList extends Fragment
 				Toast.makeText(curActivity, "Ошибка получения материалов", 
 						Toast.LENGTH_LONG).show();
 			}
+		}
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		myLogger("onSaveInstanceState():");
+		super.onSaveInstanceState(outState);
+
+		//if a user rotate screen during asynctask working  
+		if(getMaterialsTask != null && 
+				getMaterialsTask.getStatus() != AsyncTask.Status.FINISHED){
+
+			getMaterialsTask.cancelTask();
+			outState.putBoolean(ASYNCTASK_WAS_NOT_FINISHED, true);
 		}
 	}
 

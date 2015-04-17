@@ -44,6 +44,7 @@ public abstract class MyDB {
 	 * open connection
 	 */
 	public void open(){
+		myLogger("open():");
 		mDBHelper = new DBHelper(mCtx);
 		mDB = mDBHelper.getWritableDatabase();
 	}
@@ -52,7 +53,11 @@ public abstract class MyDB {
 	 * close connection
 	 */
 	public void close(){
-		if(mDBHelper != null) mDBHelper.close();
+		myLogger("close():");
+		if(mDBHelper != null){
+			mDBHelper.close();
+			myLogger(DATABASE_NAME + " closed");
+		}
 	}
 	
 	/**

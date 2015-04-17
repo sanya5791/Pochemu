@@ -17,7 +17,7 @@
  *JE6 1.2. 25.11.2014 - сделать проверку поведени€, если из вызывающего класса Fragment_main_list убрать 
  *implements AsyncTaskListener. „то будет при возникновении этой ошибки???
  *
- *-------------- BUGs: last is BU17
+ *-------------- BUGs: last is BU18
  *BU17 08.04.15 FrSkillsList; bug appears if search EditText is filled and rotate screen
  *BU13 30.03.15 FrSkillsList search make case insensetive; This SQLite limitation for not english letters
  *-------------- Without section: last is WS7
@@ -25,6 +25,7 @@
  *
  ************************* --------- Done: --------------- **********************
  *
+ *BU18 16.04.15-17.04.15 rotate screen during AsyncTask working  
  *JE7 24.02.15-12.04.15 прикручивать ACRA bug report service 
  *JE5 02.12.14 - 07.04.15 –азобратьс€. € не пон€л, почему когда вызываешь DbQueryTask из Fragment_main_list, то внутри DbQueryTask значение this=Fragment_main_list$2
  *in UI thread. So you should use it in AsyncTask.doInBackground to learn 
@@ -234,6 +235,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -249,6 +251,7 @@ public class MainActivity extends Activity implements
 	public final static String TAG = "MainActivity";
 
 	public static ConnectDBTask<MainActivity> connectDBTask;
+	private static final String ASYNCTASK_WAS_NOT_FINISHED = "AsyncTaskNotFinished"; 
 	
 	private static final String ACTION_BAR_SHOW = "ab_show";
 	private static final String AB_CONNECT_STATE = "ab_connect_state";
@@ -282,6 +285,14 @@ public class MainActivity extends Activity implements
         	}
         	
         	abIconConnectState = savedInstanceState.getBoolean(AB_CONNECT_STATE);
+        	
+        	if(savedInstanceState.getBoolean(ASYNCTASK_WAS_NOT_FINISHED)){
+        		if(abIconConnectState)
+        			disconnectDB();
+        		else
+        			connectDB();
+        	}
+        	
         	boolean state = savedInstanceState.getBoolean(RIGHT_PANE_VISIBILITY);
         	ShowFragment.rPaneVisible = state;
         	showFragment.rightPaneVisibility(state);
@@ -307,10 +318,10 @@ public class MainActivity extends Activity implements
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
+		menuConnect = menu.findItem(R.id.ab_connect);
 		if(abIconConnectState){
-			MenuItem item = menu.findItem(R.id.ab_connect);
-			item.setTitle(R.string.ab_disconnect);
-			item.setIcon(R.drawable.ic_action_connected2);
+			menuConnect.setTitle(R.string.ab_disconnect);
+			menuConnect.setIcon(R.drawable.ic_action_connected2);
 		}
 
 		return super.onPrepareOptionsMenu(menu);
@@ -340,26 +351,14 @@ public class MainActivity extends Activity implements
 
 		//the ActionBar button "connect/disconnect" was pressed
 		if (id == R.id.ab_connect) {
-			menuConnect = item;
+//			menuConnect = item;
 			String title = menuConnect.getTitle().toString();
 			String connect = getResources().getString(R.string.ab_connect);
 			
 			if(title.equals(connect)){
-				//make connection to DB in Async mode
-				connectDBTask = 
-						new ConnectDBTask<MainActivity>(this, this);
-				//pass task to connectDBTask.doInBackground
-				connectDBTask.execute("connectOpen");
-				
-				//show persons list only if frgmCon1 is empty
-				if(getFragmentManager().findFragmentById(R.id.frgmCont1) == null)
-					showFragment.personsList(ShowFragment.REPLACE);
+				connectDB();
 			}else{
-				//make connection to DB in Async mode
-				connectDBTask = 
-						new ConnectDBTask<MainActivity>(this, this);
-				//pass task to connectDBTask.doInBackground
-				connectDBTask.execute("closeConnect");
+				disconnectDB();
 			}
 			return true;
 		}
@@ -372,6 +371,36 @@ public class MainActivity extends Activity implements
 		
 		return super.onOptionsItemSelected(item);
 	}
+
+	/**
+	 * disconnect to FireBird DB
+	 */
+	private void disconnectDB() {
+		//make connection to DB in Async mode
+		connectDBTask = 
+				new ConnectDBTask<MainActivity>(this, this);
+		//pass task to connectDBTask.doInBackground
+		connectDBTask.execute("closeConnect");
+		
+	}
+
+
+	/**
+	 * connect to FireBird DB
+	 */
+	private void connectDB() {
+		//make connection to DB in Async mode
+		connectDBTask = 
+				new ConnectDBTask<MainActivity>(this, this);
+		//pass task to connectDBTask.doInBackground
+		connectDBTask.execute("connectOpen");
+		
+//		//show persons list only if frgmCon1 is empty
+//		if(getFragmentManager().findFragmentById(R.id.frgmCont1) == null)
+//			showFragment.personsList(ShowFragment.REPLACE);
+//	
+	}
+
 
 	@Override
 	public void onBackPressed() {
@@ -399,6 +428,14 @@ public class MainActivity extends Activity implements
 			outState.putBoolean(RIGHT_PANE_VISIBILITY, ShowFragment.rPaneVisible);
 		}
 		
+		//if a user rotate screen during asynctask working
+		if(connectDBTask != null && 
+				connectDBTask.getStatus() != AsyncTask.Status.FINISHED){
+
+			connectDBTask.cancelTask();
+			outState.putBoolean(ASYNCTASK_WAS_NOT_FINISHED, true);
+		}
+		
 		super.onSaveInstanceState(outState);
 	}
 
@@ -418,6 +455,11 @@ public class MainActivity extends Activity implements
 					menuConnect.setIcon(R.drawable.ic_action_connected2);
 					menuConnect.setTitle(R.string.ab_disconnect);
 					abIconConnectState=true;
+
+					//show persons list only if frgmCon1 is empty
+					if(getFragmentManager().findFragmentById(R.id.frgmCont1) == null)
+						showFragment.personsList(ShowFragment.REPLACE);
+				
 				}else{
 					menuConnect.setIcon(R.drawable.ic_action_disonnected);
 					menuConnect.setTitle(R.string.ab_connect);
