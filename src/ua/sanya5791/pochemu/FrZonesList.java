@@ -8,7 +8,6 @@ import ua.sanya5791.pochemu.control.SingletoneUI;
 import ua.sanya5791.pochemu.control.SingletoneUI.Keys;
 import ua.sanya5791.pochemu.dbfb.DbQueryTask;
 import ua.sanya5791.pochemu.dbfb.DbStatements;
-
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
@@ -21,6 +20,7 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Loader;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -71,9 +71,7 @@ public class FrZonesList extends Fragment implements
 		 */
 		public MyCursorLoader(Context context, T db, int dbtask_id, 
 											long _id) {
-			super(context);
-			this.db = db;
-			this.dbtask_id = dbtask_id;
+			this(context, db, dbtask_id);
 			this._id = _id;
 		}
 		
@@ -128,7 +126,8 @@ public class FrZonesList extends Fragment implements
 	private OnLvSelectListener onLvSelectListener;
 
 	private DbQueryTask<FrZonesList> getZonesTask;
-
+	private static final String ASYNCTASK_WAS_NOT_FINISHED = "AsyncTaskNotFinished"; 
+	
 	@Override
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
@@ -237,7 +236,8 @@ public class FrZonesList extends Fragment implements
 		myLogger("onActivityCreated: ");
 		
 		//on screen rotate don't call FB DB, but use SQLite DB instead
-		if(savedInstanceState != null){
+		if(savedInstanceState != null &&
+				! savedInstanceState.getBoolean(ASYNCTASK_WAS_NOT_FINISHED)){
 //			// создаем лоадер чтения данных for ListView
 		    getLoaderManager().initLoader(DBTASK_GET_DATA_FOR_LV, 
 		    		null, this);
@@ -245,7 +245,6 @@ public class FrZonesList extends Fragment implements
 		}
 		
 		//take list of ZONES from DB and show it in local ListView
-//		Connection connection = MainActivity.connectDBTask.getConnection();
 		getZonesTask = new DbQueryTask<FrZonesList>(curActivity, this){
 			
 			// CallableStatement "ZONES_SELECT"
@@ -260,6 +259,7 @@ public class FrZonesList extends Fragment implements
 					return false;
 			}
 		};
+		
 		getZonesTask.execute();
 	}
 
@@ -282,10 +282,25 @@ public class FrZonesList extends Fragment implements
 	@Override
 	public void onDestroyView() {
 		myLogger("onDestroyView():");
+		
 		super.onDestroyView();
 		dbZones.close();
 	}
 	
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		myLogger("onSaveInstanceState():");
+		super.onSaveInstanceState(outState);
+
+		//if a user rotate screen during asynctask working  
+		if(getZonesTask != null && 
+				getZonesTask.getStatus() != AsyncTask.Status.FINISHED){
+
+			getZonesTask.cancelTask();
+			outState.putBoolean(ASYNCTASK_WAS_NOT_FINISHED, true);
+		}
+	}
+
 	@Override
 	public Loader<Cursor> onCreateLoader(int dbtask_id, Bundle args) {
 		myLogger("onCreateLoader():");

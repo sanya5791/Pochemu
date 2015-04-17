@@ -24,6 +24,7 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Loader;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -74,9 +75,7 @@ public class FrPersonsList extends Fragment
 		 */
 		public MyCursorLoader(Context context, Persons db, int dbtask_id, 
 											long _id) {
-			super(context);
-			this.db = db;
-			this.dbtask_id = dbtask_id;
+			this(context, db, dbtask_id);
 			this._id = _id;
 		}
 		
@@ -109,6 +108,7 @@ public class FrPersonsList extends Fragment
 	private OnLvSelectListener onLvSelectListener;
 
 	private DbQueryTask<FrPersonsList> getPersonsTask;
+	private static final String ASYNCTASK_WAS_NOT_FINISHED = "AsyncTaskNotFinished"; 
 	private SimpleCursorAdapter scAdapter;
 	private ResultSet rs;
 	
@@ -243,7 +243,8 @@ public class FrPersonsList extends Fragment
 		super.onActivityCreated(savedInstanceState);
 		myLogger("onActivityCreated: ");
 		
-		if(savedInstanceState != null){
+		if(savedInstanceState != null &&
+				! savedInstanceState.getBoolean(ASYNCTASK_WAS_NOT_FINISHED)){
 			// создаем лоадер чтения данных for ListView
 		    getLoaderManager().initLoader(DBTASK_GET_DATA_FOR_LV, 
 		    		null, this);
@@ -394,6 +395,20 @@ public class FrPersonsList extends Fragment
 		
 		stUI.putKey(Keys.PERSON_NAME , selectedPersonFullName);
 		return true;
+	}
+
+	
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+
+		//if a user rotate screen during asynctask working  
+		if(getPersonsTask != null && 
+				getPersonsTask.getStatus() != AsyncTask.Status.FINISHED){
+
+			getPersonsTask.cancelTask();
+			outState.putBoolean(ASYNCTASK_WAS_NOT_FINISHED, true);
+		}
 	}
 
 	private void myLogger(String statement){

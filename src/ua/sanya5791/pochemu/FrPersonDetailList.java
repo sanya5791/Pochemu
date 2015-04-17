@@ -13,6 +13,7 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -40,6 +41,7 @@ public class FrPersonDetailList extends Fragment
 	private Activity curActivity;		//base Activity who places the fragment 
 
 	private DbQueryTask<FrPersonDetailList> getPersonDetailTask;
+	private static final String ASYNCTASK_WAS_NOT_FINISHED = "AsyncTaskNotFinished"; 
 
 	private SimpleCursorAdapter scAdapter;
 	private ResultSet rs;
@@ -131,7 +133,8 @@ public class FrPersonDetailList extends Fragment
 		myLogger("onActivityCreated: ");
 
 		//on screen rotate load data from SQLite DB
-		if(savedInstanceState != null){
+		if(savedInstanceState != null &&
+				! savedInstanceState.getBoolean(ASYNCTASK_WAS_NOT_FINISHED)){
 			restoreLocalList();
 			return;
 		}
@@ -214,6 +217,20 @@ public class FrPersonDetailList extends Fragment
 				Toast.makeText(curActivity, "Ошибка получения материалов", 
 						Toast.LENGTH_LONG).show();
 			}
+		}
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		myLogger("onSaveInstanceState():");
+		super.onSaveInstanceState(outState);
+
+		//if a user rotate screen during asynctask working  
+		if(getPersonDetailTask != null && 
+				getPersonDetailTask.getStatus() != AsyncTask.Status.FINISHED){
+
+			getPersonDetailTask.cancelTask();
+			outState.putBoolean(ASYNCTASK_WAS_NOT_FINISHED, true);
 		}
 	}
 

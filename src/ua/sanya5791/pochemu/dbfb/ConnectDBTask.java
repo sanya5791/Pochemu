@@ -133,6 +133,8 @@ public class ConnectDBTask<T> extends AsyncTask<String, String, Boolean> {
 			//Сначала проверим есть ли драйвер
 			myLogger("Сначала проверим есть ли драйвер");
 			try {
+				if (isCancelled()) return false;
+				
 				myLogger("Заходим в первый try - look for Jadbird driver");
 				Class.forName("org.firebirdsql.jdbc.FBDriver");
 			} catch (ClassNotFoundException e) {
@@ -142,8 +144,8 @@ public class ConnectDBTask<T> extends AsyncTask<String, String, Boolean> {
 				setWasFaults();
 				return false;
 			}
+			
 			myLogger("Драйвер найден");
-
 			Properties ParamConnections = new Properties();
 			ParamConnections.setProperty("user", login);
 			ParamConnections.setProperty("password", passw);
@@ -152,10 +154,15 @@ public class ConnectDBTask<T> extends AsyncTask<String, String, Boolean> {
 
 			//Connection to DB
 			try {
+				if(isCancelled()) return false;
+
 				myLogger("Пытаемся соединиться строкой: " + sCon 
 						+ "login:"+login + ":passw: *****;");
 				mConnection = DriverManager.getConnection(sCon,
 						ParamConnections);
+				
+				if(isCancelled()) return false;
+				
 				myLogger("Connection to DB is successfull");
 			}catch (java.sql.SQLException e){
 
@@ -397,6 +404,11 @@ public class ConnectDBTask<T> extends AsyncTask<String, String, Boolean> {
 		mWasFaults = 0;
 	}
 	
+	public void cancelTask() {
+		progressDialog.dismiss();
+		cancel(true);
+	}
+
 	private void myLogger(String statement){
 		if (isDebug) {
 			Log.v(TAG, statement);
